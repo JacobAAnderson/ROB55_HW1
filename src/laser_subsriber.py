@@ -37,7 +37,7 @@ class mover:
 	def __init__(self, dist):
 
 		# Initialize the node.
-		rospy.init_node('laser_subscriber', argv=sys.argv)
+		rospy.init_node('laser_subscriber')
 
 		# Set up a subscriber and publisher.
 		self.sub = rospy.Subscriber('base_scan', LaserScan, self.lidar_callback)
@@ -53,23 +53,24 @@ class mover:
 		self.lidar_STD = 0
 		self.dist = dist
 
-
 	def lidar_callback(self, lidar_msg):
 		"""
 		Handel Laser scan data
 		"""
 
+		min_range = min(lidar_msg.ranges) 	# Shortest range measurment
+
 		# Lidar Calibration --> Get standard deviation in the lidar measurments
-		min_range = min(lidar_msg.ranges)
-
 		if not self.is_cal:
-			self.cal_set.append(min_range)
+			self.cal_set.append(min_range) 	# Create Calibration set
 
-			if len(self.cal_set) >= 100:
-				self.lidar_STD = np.std(self.cal_set)
-				self.is_cal = True
-				self.x = np.average(self.cal_set)
-				self.sig = self.lidar_STD
+			if len(self.cal_set) >= 10: 				# ___ Do calibration ____
+				self.lidar_STD = np.std(self.cal_set) 	# Lidar Standared Deviation
+				self.x = np.average(self.cal_set) 		# average Lidare range to initiate measurment state
+				self.sig = self.lidar_STD 				# Initialize measurment uncertainty with Lidar uncertainty
+				self.is_cal = True 						# Indicate that the lidar has been calibrated
+
+				self.t_last = rospy.get_time() 			# Initalize time keeping
 
 				print("Done Calibarting")
 				print('lidar_STD: {0}\n'.format(self.lidar_STD) )
@@ -77,30 +78,31 @@ class mover:
 			else: return
 
 
+		##---- Filter Lidar Range Measurments -----
+		# Elapsed time between filter updates
+		time_ = rospy.get_time()
+		dt = time_ - self.t_last
+		self.t_last = time_
 
+		# Filter settings
 		A =  1   				# Process Model  --> Lidar measurment
-		B = -1   				# Control Model  --> Robot movement
+		B = -dt   				# Control Model  --> Robot movement
 		Q =  0.05  				# Process STD    --> Error in robot Movement
 		R =  self.lidar_STD 	# Measurment STD --> Lidar noise
 
 		self.x, self.sig = kalmanFilter(self.x, self.sig, self.speed, min_range, A, B, Q, R)
 
+
+		# --- State Error ---
 		err = self.dist - self.x
 
-		# Check to see if we can really do better
-		if abs(err) > self.lidar_STD * 3:
+		if abs(err) > self.lidar_STD * 3: 	# Check to see if we can really do better
 			self.speed = tanh(err)
-
 		else:
-			self.speed = 0
+			self.speed = 0.0
 
 
-		print( '\nMin Range: {0} [m]'.format(min_range) )
-		print( 'X: {0}\tSIG: {1}'.format(self.x, self.sig) )
-		print( 'Error: {0}'.format(err) )
-		print( 'Joint Err: {0}'.format(joint_err) )
-		print( 'Speed: {0} [m/s]\n'.format(self.speed) )
-
+		# --- Send Comand Message ----
 		cmd_msg = Twist()
 		cmd_msg.linear.x = self.speed
 		cmd_msg.linear.y = 0.0
@@ -110,6 +112,13 @@ class mover:
 		cmd_msg.angular.z = 0.0
 
 		self.pub.publish(cmd_msg)
+
+		# --- Debugging ---
+		print( '\nMin Range: {0} [m]'.format(min_range) )
+		print( 'X: {0} {1} {2}'.format(self.x, u"\u00B1", self.sig) )
+		print( 'Error: {0}'.format(err) )
+		print( 'dt: {0}'.format(dt) )
+		print( 'Speed: {0} [m/s]\n'.format(self.speed) )
 
 
 if __name__ == '__main__':
