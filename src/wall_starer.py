@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Jake Anderson
-# ROB 599 Software deve
+# ROB 599 Software Dev
 # Homework 1
 # Oct 19, 2020
 
@@ -10,10 +10,10 @@ import rospy
 import sys
 import numpy as np
 
-from math import tanh, sqrt
+from math              import tanh, sqrt, isnan
 from sensor_msgs.msg   import LaserScan
 from geometry_msgs.msg import Twist
-
+from rob599_hw1.srv    import Stopping_distance, Stopping_distanceResponse
 
 
 def kalmanFilter(x, sig, u, z, A, B, Q, R):
@@ -32,19 +32,26 @@ def kalmanFilter(x, sig, u, z, A, B, Q, R):
 	return x, sig
 
 
-class mover:
+
+class wall_starer:
 
 	def __init__(self, dist):
 
+		"""
+		Initialize the laser_subscriber Node
+		"""
+
 		# Initialize the node.
-		rospy.init_node('laser_subscriber')
+		rospy.init_node('staring_at_wall')
 
 		# Set up a subscriber and publisher.
-		self.sub = rospy.Subscriber('base_scan', LaserScan, self.lidar_callback)
+
+		laser_topic = 'base_scan_filterd'
+#		laser_topic = 'base_scan'
+
+		sub  = rospy.Subscriber(laser_topic, LaserScan, self.lidar_callback)
+		serv = rospy.Service('stopping_distance', Stopping_distance, self.SD_Callback)
 		self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
-
-		print("Calibarting")
-
 		self.x = 0
 		self.sig = 0
 		self.speed = 0
@@ -53,6 +60,13 @@ class mover:
 		self.lidar_STD = 0
 		self.dist = dist
 
+		rospy.loginfo("Starting 'laser_subscriber' Node")
+		rospy.loginfo("Subsribing to: {0}".format(laser_topic))
+		rospy.loginfo('Stopping Distance Service started')
+		rospy.loginfo("Getting Laser Calibration")
+
+
+	# Lidar Scan Subscriber Callback
 	def lidar_callback(self, lidar_msg):
 		"""
 		Handel Laser scan data
@@ -64,7 +78,7 @@ class mover:
 		if not self.is_cal:
 			self.cal_set.append(min_range) 	# Create Calibration set
 
-			if len(self.cal_set) >= 10: 				# ___ Do calibration ____
+			if len(self.cal_set) >= 50: 				# ___ Do calibration ____
 				self.lidar_STD = np.std(self.cal_set) 	# Lidar Standared Deviation
 				self.x = np.average(self.cal_set) 		# average Lidare range to initiate measurment state
 				self.sig = self.lidar_STD 				# Initialize measurment uncertainty with Lidar uncertainty
@@ -72,8 +86,8 @@ class mover:
 
 				self.t_last = rospy.get_time() 			# Initalize time keeping
 
-				print("Done Calibarting")
-				print('lidar_STD: {0}\n'.format(self.lidar_STD) )
+#				print("Done Calibarting")
+#				print('lidar_STD: {0}\n'.format(self.lidar_STD) )
 
 			else: return
 
@@ -94,10 +108,10 @@ class mover:
 
 
 		# --- State Error ---
-		err = self.dist - self.x
+		err = self.x - self.dist
 
 		if abs(err) > self.lidar_STD * 3: 	# Check to see if we can really do better
-			self.speed = tanh(err)
+			self.speed = tanh(err * 2) 		# Multiply error by 2 to avoid creeping robot syndrom
 		else:
 			self.speed = 0.0
 
@@ -114,17 +128,36 @@ class mover:
 		self.pub.publish(cmd_msg)
 
 		# --- Debugging ---
-		print( '\nMin Range: {0} [m]'.format(min_range) )
-		print( 'X: {0} {1} {2}'.format(self.x, u"\u00B1", self.sig) )
-		print( 'Error: {0}'.format(err) )
-		print( 'dt: {0}'.format(dt) )
-		print( 'Speed: {0} [m/s]\n'.format(self.speed) )
+		rospy.loginfo( 'Min Range: {0} [m]'.format(min_range) )
+		rospy.loginfo( 'X: {0} {1} {2}'.format(self.x, u"\u00B1", self.sig) )
+		rospy.loginfo( 'Error: {0}'.format(err) )
+#		rospy.loginfo( 'dt: {0}'.format(dt) )
+		rospy.loginfo( 'Speed: {0} [m/s]\n'.format(self.speed) )
+
+
+	# Stopping Distance Service Call Back
+	def SD_Callback(self, request):
+
+		sd = request.stopping_distance
+
+		rospy.loginfo('Stopping Distance Service Got: {0}'.format(sd))
+
+		max_dist = 20
+
+		# Check if the set point is a valid number
+		if isnan(sd) or sd < 0.5 or max_dist < sd:
+			return Stopping_distanceResponse(False)
+
+		else:
+			self.dist = sd;
+			return Stopping_distanceResponse(True)
+
 
 
 if __name__ == '__main__':
 
 	# Instanciate the mover and giv it a distance of 1 meter
-	mv = mover(1)
+	ws = wall_starer(1)
 
 	# Give control to ROS.
 	rospy.spin()

@@ -19,9 +19,9 @@ def callback(lidar_msg):
 	Callback function to filter LaserScan Data.
 	"""
 
-	print('\n\nLidar Max Range: {0}'.format(lidar_msg.range_max) )
-	print("Old Max Angle {0}".format(lidar_msg.angle_min))
-	print("Old Min Angle {0}".format(lidar_msg.angle_max))
+#	print('\n\nLidar Max Range: {0}'.format(lidar_msg.range_max) )
+#	print("Old Max Angle {0}".format(lidar_msg.angle_min))
+#	print("Old Min Angle {0}".format(lidar_msg.angle_max))
 
 	newRanges = []
 	newAngles = []
@@ -41,8 +41,8 @@ def callback(lidar_msg):
 	lidar_msg.ranges = newRanges
 	lidar_msg.intensities = newIntens
 
-	print("New Max Angle {0}".format(lidar_msg.angle_min))
-	print("New Min Angle {0}\n".format(lidar_msg.angle_max))
+#	print("New Max Angle {0}".format(lidar_msg.angle_min))
+#	print("New Min Angle {0}\n".format(lidar_msg.angle_max))
 
 	pub.publish(lidar_msg)
 
@@ -50,6 +50,8 @@ def callback(lidar_msg):
 if __name__ == '__main__':
 	# Initialize the node.
 	rospy.init_node('laser_filter')
+
+	rospy.loginfo("Starting 'laser_filter' Node")
 
 	# Set up a subscriber and publisher.
 	sub = rospy.Subscriber('base_scan', LaserScan, callback )

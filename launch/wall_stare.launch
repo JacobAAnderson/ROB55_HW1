@@ -1,0 +1,18 @@
+<!--
+ROB599 Homwork 1 - Staring at walls
+Jake Anderson
+Oct 24, 2020
+-->
+
+
+<launch>
+
+	<!-- Start the . -->
+	<node pkg="rob599_hw1" name="staring_at_wall" type="wall_starer.py">
+	</node>
+
+	<!-- Start the doubler node, running with it's default settings. -->
+	<node pkg="rob599_hw1" name="laser_filter" type="laserScan_filter.py" >
+	</node>
+
+</launch>
