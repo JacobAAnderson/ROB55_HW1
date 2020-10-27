@@ -12,7 +12,7 @@ from math              import tanh, sqrt, isnan
 from sensor_msgs.msg   import LaserScan
 from geometry_msgs.msg import Twist
 from rob599_hw1.srv    import Stopping_distance, Stopping_distanceResponse
-
+from rob599_hw1.msg    import Approach_WallAction, Approach_WallGoal, Approach_WallFeedback, Approach_WallResult
 
 def kalmanFilter(x, sig, u, z, A, B, Q, R):
 
@@ -47,8 +47,10 @@ class wall_starer:
 		laser_topic = 'base_scan_filterd'
 #		laser_topic = 'base_scan'
 
-		sub  = rospy.Subscriber(laser_topic, LaserScan, self.lidar_callback)
-		serv = rospy.Service('stopping_distance', Stopping_distance, self.SD_Callback)
+		subscriber = rospy.Subscriber(laser_topic, LaserScan, self.lidar_callback)
+		service    = rospy.Service('stopping_distance', Stopping_distance, self.SD_Callback)
+		server     = actionlib.SimpleActionServer('approach_wall', Approach_WallAction, self.Approach, False)
+
 		self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
 		self.x = 0
 		self.sig = 0
@@ -151,6 +153,13 @@ class wall_starer:
 			rospy.loginfo("Stopping Distance Accepted")
 			self.dist = sd;
 			return Stopping_distanceResponse(True)
+
+
+	# Approach Action server
+	def Approach_WallAction(self,goal):
+
+		self.dist = goal.distance
+
 
 
 

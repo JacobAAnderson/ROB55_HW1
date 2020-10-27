@@ -1,9 +1,8 @@
 # goal
-int64 number
+float64 distance
 ---
 # result
-int32[] sequence
+bool arrived
 ---
 # feedback
-int64 progress
-
+float64 err
