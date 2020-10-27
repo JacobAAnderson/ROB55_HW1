@@ -2,12 +2,11 @@
 # Jake Anderson
 # ROB 599 Software deve
 # Homework 1
-# Oct 20, 2020
+# Oct 27, 2020
 
 # Filter out Laser Scan data that is not infront of the robot
 
 import rospy
-import sys
 import numpy as np
 
 from math import tanh, sin

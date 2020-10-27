@@ -2,12 +2,10 @@
 # Jake Anderson
 # ROB 599 Software Dev
 # Homework 1
-# Oct 19, 2020
+# Oct 27, 2020
 
-# Move Fetch Robot
-
+# Move Fetch Robot to within a certain distance of the wall
 import rospy
-import sys
 import numpy as np
 
 from math              import tanh, sqrt, isnan
@@ -146,9 +144,11 @@ class wall_starer:
 
 		# Check if the set point is a valid number
 		if isnan(sd) or sd < 0.5 or max_dist < sd:
+			rospy.loginfo("Stopping Distance Rejected")
 			return Stopping_distanceResponse(False)
 
 		else:
+			rospy.loginfo("Stopping Distance Accepted")
 			self.dist = sd;
 			return Stopping_distanceResponse(True)
 
@@ -157,7 +157,8 @@ class wall_starer:
 if __name__ == '__main__':
 
 	# Instanciate the mover and giv it a distance of 1 meter
-	ws = wall_starer(1)
+	stopDistance = 1.0
+	ws = wall_starer(stopDistance)
 
 	# Give control to ROS.
 	rospy.spin()
