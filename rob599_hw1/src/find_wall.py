@@ -91,7 +91,7 @@ def callback(lidar_msg):
 	theta = cross2d(V[:,1], [0,-1])
 
 	print("\nV: {0}".format(V))
-	rospy.loginfo("Wall Angle: {0}} [deg]".format(theta * 180 / np.pi))
+	rospy.loginfo("Wall Angle: {0} [deg]".format(theta * 180 / np.pi))
 
 	wall = PoseStamped()
 	wall.header = lidar_msg.header
