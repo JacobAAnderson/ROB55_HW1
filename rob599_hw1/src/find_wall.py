@@ -81,17 +81,21 @@ def callback(lidar_msg):
 	W, V = np.linalg.eig(cov)
 
 	print("\n\n\nV: {0}".format(V))
-
-	if V[1,0] > 0:
-		V[:,0] = -V[:,0]
+	print("W: {0}".format(W))
+#	if V[1,0] > 0:
+#		V[:,0] = -V[:,0]
 
 	if not CheckCov_eigVectors(V):     # Make Sure the Eigen Vectors are correct
 		return
 
-	theta = cross2d(V[:,1], [0,-1])
+	if W[0] < W[1]:
+		theta = cross2d(V[:,1], [0,-1])
+	else:
+		theta = cross2d(V[:,0], [0,-1])
+
 
 	print("\nV: {0}".format(V))
-	rospy.loginfo("Wall Angle: {0}} [deg]".format(theta * 180 / np.pi))
+	rospy.loginfo("Wall Angle: {0} [deg]".format(theta * 180 / np.pi))
 
 	wall = PoseStamped()
 	wall.header = lidar_msg.header
