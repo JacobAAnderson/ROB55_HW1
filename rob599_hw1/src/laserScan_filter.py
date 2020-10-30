@@ -18,10 +18,6 @@ def callback(lidar_msg):
 	Callback function to filter LaserScan Data.
 	"""
 
-#	print('\n\nLidar Max Range: {0}'.format(lidar_msg.range_max) )
-#	print("Old Max Angle {0}".format(lidar_msg.angle_min))
-#	print("Old Min Angle {0}".format(lidar_msg.angle_max))
-
 	newRanges = []
 	newAngles = []
 	newIntens = []
@@ -29,7 +25,7 @@ def callback(lidar_msg):
 	angles = np.arange(lidar_msg.angle_min, lidar_msg.angle_max, lidar_msg.angle_increment)
 	for r, a, i in zip(lidar_msg.ranges, angles, lidar_msg.intensities):
 
-		if abs(r*sin(a)) <= 0.5:
+		if abs(r*sin(a)) <= 0.5: 		# If the beam is les than 0.5 meters wide, then keep it
 			newRanges.append(r)
 			newAngles.append(a)
 			newIntens.append(i)
@@ -39,9 +35,6 @@ def callback(lidar_msg):
 	lidar_msg.angle_max = max(newAngles)
 	lidar_msg.ranges = newRanges
 	lidar_msg.intensities = newIntens
-
-#	print("New Max Angle {0}".format(lidar_msg.angle_min))
-#	print("New Min Angle {0}\n".format(lidar_msg.angle_max))
 
 	pub.publish(lidar_msg)
 
