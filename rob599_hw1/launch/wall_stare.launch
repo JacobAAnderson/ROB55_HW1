@@ -7,12 +7,20 @@ Oct 24, 2020
 
 <launch>
 
-	<!-- Start the . -->
+	<!-- Start the laser filter node. -->
+	<node pkg="rob599_hw1" name="laser_filter" type="laserScan_filter.py" >
+	</node>
+
+	<!-- Start the RVIZ marker node. -->
+	<node pkg="rob599_hw1" name="lidar_marker" type="markers.py" >
+	</node>
+
+	<!-- Start the wall approach node. -->
 	<node pkg="rob599_hw1" name="staring_at_wall" type="wall_starer.py">
 	</node>
 
-	<!-- Start the doubler node, running with it's default settings. -->
-	<node pkg="rob599_hw1" name="laser_filter" type="laserScan_filter.py" >
+	<!-- Start the wall finder node. -->
+	<node pkg="rob599_hw1" name="wall_finder" type="find_wall.py">
 	</node>
 
 </launch>

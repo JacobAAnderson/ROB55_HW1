@@ -6,9 +6,11 @@
 
 # Move Fetch Robot to within a certain distance of the wall
 import rospy
+import actionlib
+
 import numpy as np
 
-from math              import tanh, sqrt, isnan
+from math              import tanh, sqrt, isnan, inf
 from sensor_msgs.msg   import LaserScan
 from geometry_msgs.msg import Twist
 from rob599_hw1.srv    import Stopping_distance, Stopping_distanceResponse
@@ -47,10 +49,8 @@ class wall_starer:
 		laser_topic = 'base_scan_filterd'
 #		laser_topic = 'base_scan'
 
-		subscriber = rospy.Subscriber(laser_topic, LaserScan, self.lidar_callback)
-		service    = rospy.Service('stopping_distance', Stopping_distance, self.SD_Callback)
-		server     = actionlib.SimpleActionServer('approach_wall', Approach_WallAction, self.Approach, False)
-
+		self.sub = rospy.Subscriber(laser_topic, LaserScan, self.lidar_callback)
+		self.ser = rospy.Service('stopping_distance', Stopping_distance, self.SD_Callback)
 		self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
 		self.x = 0
 		self.sig = 0
@@ -128,11 +128,11 @@ class wall_starer:
 		self.pub.publish(cmd_msg)
 
 		# --- Debugging ---
-		rospy.loginfo( 'Min Range: {0} [m]'.format(min_range) )
-		rospy.loginfo( 'X: {0} {1} {2}'.format(self.x, u"\u00B1", self.sig) )
-		rospy.loginfo( 'Error: {0}'.format(err) )
+		#rospy.loginfo( 'Min Range: {0} [m]'.format(min_range) )
+		#rospy.loginfo( 'X: {0} {1} {2}'.format(self.x, u"\u00B1", self.sig) )
+		#rospy.loginfo( 'Error: {0}'.format(err) )
 #		rospy.loginfo( 'dt: {0}'.format(dt) )
-		rospy.loginfo( 'Speed: {0} [m/s]\n'.format(self.speed) )
+		#rospy.loginfo( 'Speed: {0} [m/s]\n'.format(self.speed) )
 
 
 	# Stopping Distance Service Call Back
@@ -156,10 +156,40 @@ class wall_starer:
 
 
 	# Approach Action server
-	def Approach_WallAction(self,goal):
+	def Approach(self,goal):
+
+		rospy.loginfo( "Goal Recived: {0}".format(goal.distance) )
+
+		sd = goal.distance
+		max_dist = 20
+		if isnan(sd) or sd < 0.5 or max_dist < sd:
+			rospy.loginfo("Stopping Distance Rejected")
+			server.set_preempted(Approach_WallResult(arrived=False))
+			return
+
+		self.ser.shutdown('approach_wall action server is taking over')
 
 		self.dist = goal.distance
 
+		err = inf
+		rate = rospy.Rate(2)
+
+		while not rospy.is_shutdown() and abs(err) > self.lidar_STD * 3:
+
+			# Publish feedback, so that the caller knows about progress, if it cares.
+			err = self.x - self.dist
+			server.publish_feedback(Approach_WallFeedback(err= err))
+
+			rate.sleep()
+
+			# Did we receive a new goal?  If so, preempt the current one.
+			if server.is_new_goal_available():
+				server.set_preempted(Approach_WallResult(arrived=False))
+				return
+
+		server.set_succeeded(Approach_WallResult(arrived=True))
+
+		self.ser = rospy.Service('stopping_distance', Stopping_distance, self.SD_Callback)
 
 
 
@@ -169,5 +199,10 @@ if __name__ == '__main__':
 	stopDistance = 1.0
 	ws = wall_starer(stopDistance)
 
+	# Create wall approach server
+	server = actionlib.SimpleActionServer('approach_wall', Approach_WallAction, ws.Approach, False)
+	server.start()
+
+	rospy.loginfo( "Wall Approach Action Server Started")
 	# Give control to ROS.
 	rospy.spin()
