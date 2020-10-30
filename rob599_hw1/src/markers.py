@@ -52,9 +52,9 @@ def Text( frame_id, length, angle):
 	marker.type = marker.TEXT_VIEW_FACING
 	marker.action = marker.ADD
 	marker.text = "Dist: {:.2f} [m]".format(length)
-	marker.scale.x = 1
-	marker.scale.y = 1
-	marker.scale.z = 1
+	marker.scale.x = 0.5
+	marker.scale.y = 0.5
+	marker.scale.z = 0.5
 	marker.color.a = 1.0
 	marker.color.r = 0.0
 	marker.color.g = 0.1

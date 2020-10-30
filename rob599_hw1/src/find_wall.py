@@ -35,6 +35,28 @@ def cross2d(a,b):
 	return np.arccos(a)
 
 
+def Text( frame_id, x_, y_, theta ):
+
+	marker = Marker()
+	marker.header.frame_id = frame_id
+	marker.type = marker.TEXT_VIEW_FACING
+	marker.action = marker.ADD
+	marker.text = "Angle: {:.2f} [deg]".format(theta * 180/np.pi)
+	marker.scale.x = 0.5
+	marker.scale.y = 0.5
+	marker.scale.z = 0.5
+	marker.color.a = 1.0
+	marker.color.r = 0.0
+	marker.color.g = 1.0
+	marker.color.b = 1.0
+	marker.pose.orientation.w = 1.0
+	marker.pose.position.x = x_ + 3 * np.cos(theta)
+	marker.pose.position.y = y_ + 3 * np.sin(theta)
+	marker.pose.position.z = 0.25
+
+	return marker
+
+
 def callback(lidar_msg):
 	"""
 	Callback function to create LaserScan markders.
@@ -69,7 +91,10 @@ def callback(lidar_msg):
 	wall.header = lidar_msg.header
 	wall.pose   = Pose(Point(x_, y_, 0), heading(theta))
 
-	pub.publish(wall)
+	text  = Text( lidar_msg.header.frame_id, x_, y_, theta )
+
+	pubW.publish(wall)
+	pubT.publish(text)
 
 
 if __name__ == '__main__':
@@ -79,7 +104,8 @@ if __name__ == '__main__':
 	rospy.loginfo("Starting 'wall_finder' Node")
 
 	# Set up a subscriber and publisher.
-	sub = rospy.Subscriber('base_scan_filterd', LaserScan, callback )
-	pub = rospy.Publisher( 'wall_pose', PoseStamped, queue_size=1 )
+	sub  = rospy.Subscriber('base_scan_filterd', LaserScan, callback )
+	pubW = rospy.Publisher( 'wall_pose', PoseStamped, queue_size=1 )
+	pubT = rospy.Publisher( 'wall_angle_text', Marker, queue_size=1 )
 
 	rospy.spin()
