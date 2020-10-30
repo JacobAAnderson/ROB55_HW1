@@ -23,24 +23,6 @@ def heading(yaw):
     return Quaternion(*q)
 
 
-def CheckCov_eigVectors(V):
-    # Make sure that we have the eigen vecors right
-	u = np.append(V[:,0], 0)
-	v = np.append(V[:,1], 0)
-	c = np.cross(u,v)
-	c = np.linalg.norm(c)
-	d = np.dot(u,v)
-
-	theta = np.arctan2(c,d)
-
-	if not theta == np.pi/2:
-		rospy.logwarn("Covaraince Eigen Vectors are not Orthoganal: {0}".format(theta * 180 / np.pi))
-		return False
-
-	return True
-
-
-
 def cross2d(a,b):
 
 	n1 = np.sqrt(a[0]*a[0] + a[1]*a[1] )
@@ -48,14 +30,9 @@ def cross2d(a,b):
 
 	ab = a[0] * b[0] + b[1] * a[1]
 
-	a = ab/ (n1*n2)
+	a = ab/(n1*n2)
 
-	theta = np.arccos(a)
-
-	if abs( theta ) > np.pi:
-		theta = 2*pi - theta;
-
-	return theta
+	return np.arccos(a)
 
 
 def callback(lidar_msg):
@@ -80,21 +57,12 @@ def callback(lidar_msg):
 	# Use covariance matrix to find angle between the wall and robot
 	W, V = np.linalg.eig(cov)
 
-	print("\n\n\nV: {0}".format(V))
-	print("W: {0}".format(W))
-#	if V[1,0] > 0:
-#		V[:,0] = -V[:,0]
-
-	if not CheckCov_eigVectors(V):     # Make Sure the Eigen Vectors are correct
-		return
-
+	# See which eigen vector should be used
 	if W[0] < W[1]:
-		theta = cross2d(V[:,1], [0,-1])
-	else:
+		theta = cross2d(V[:,1], [0,-1])        # Calculate angle between robot and the wall
+	else:                                      #   0 is the robot is perpendiculare to the wall
 		theta = cross2d(V[:,0], [0,-1])
 
-
-	print("\nV: {0}".format(V))
 	rospy.loginfo("Wall Angle: {0} [deg]".format(theta * 180 / np.pi))
 
 	wall = PoseStamped()
