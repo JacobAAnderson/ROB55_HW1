@@ -1,0 +1,25 @@
+Jacob Anderson
+ROB 599 Software Dev
+Homework 1
+October 27, 2020
+
+This package should install with catkin_make
+
+The launch file is: wall_stare.launch
+
+
+Topics of interest:
+    Filtered LaserScan:   'base_scan_filterd'
+    Wall distance arrow:  'lidar_marker_arrow'
+    Wall distance text:   'lidar_marker_text'
+    Wall pose:            'wall_pose'
+    Wall angle text:      'wall_angle_text'
+
+
+Stopping distance service: '/stopping_distance'
+
+Stopping distance action service: 'approach_wall'
+  Topics:
+    goal.distance
+    feedback.err
+    result.arrived
