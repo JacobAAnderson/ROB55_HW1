@@ -81,6 +81,7 @@ def callback(lidar_msg):
 	pubA.publish(arrow)
 	pubT.publish(text)
 
+
 if __name__ == '__main__':
 	# Initialize the node.
 	rospy.init_node('lidar_marker')
