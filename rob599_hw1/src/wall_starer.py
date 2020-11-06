@@ -38,7 +38,7 @@ def kalmanFilter(x, sig, u, z, A, B, Q, R):
 
 class wall_starer:
 
-	def __init__(self, dist):
+	def __init__(self, distance=1, max_speed=1, aggressiveness=1):
 
 		"""
 		Initialize the laser_subscriber Node
@@ -61,7 +61,18 @@ class wall_starer:
 		self.is_cal = False
 		self.cal_set = []
 		self.lidar_STD = 0
-		self.dist = dist
+		self.distance = distance
+		self.max_speed = max_speed
+		self.aggressiveness = aggressiveness
+
+		# Prealocate Twist message
+		self.twist = Twist()
+		self.twist.linear.x = 0.0
+		self.twist.linear.y = 0.0
+		self.twist.linear.z = 0.0
+		self.twist.angular.x = 0.0
+		self.twist.angular.y = 0.0
+		self.twist.angular.z = 0.0
 
 		rospy.loginfo("Starting 'laser_subscriber' Node")
 		rospy.loginfo("Subsribing to: {0}".format(laser_topic))
@@ -111,24 +122,18 @@ class wall_starer:
 
 
 		# --- State Error ---
-		err = self.x - self.dist
+		err = self.x - self.distance
 
 		if abs(err) > self.lidar_STD * 3: 	# Check to see if we can really do better
-			self.speed = tanh(err * 2) 		# Multiply error by 2 to avoid creeping robot syndrom
+			self.speed = tanh(err * self.aggressiveness) * self.max_speed
+
 		else:
 			self.speed = 0.0
 
 
 		# --- Send Comand Message ----
-		cmd_msg = Twist()
-		cmd_msg.linear.x = self.speed
-		cmd_msg.linear.y = 0.0
-		cmd_msg.linear.z = 0.0
-		cmd_msg.angular.x = 0.0
-		cmd_msg.angular.y = 0.0
-		cmd_msg.angular.z = 0.0
-
-		self.pub.publish(cmd_msg)
+		self.twist.linear.x = self.speed
+		self.pub.publish(self.twist)
 
 		# --- Debugging ---
 		#rospy.loginfo( 'Min Range: {0} [m]'.format(min_range) )
@@ -183,12 +188,13 @@ class wall_starer:
 			err = self.x - self.dist
 			server.publish_feedback(Approach_WallFeedback(err= err))
 
-			rate.sleep()
-
 			# Did we receive a new goal?  If so, preempt the current one.
 			if server.is_new_goal_available():
 				server.set_preempted(Approach_WallResult(arrived=False))
 				return
+
+			rate.sleep()
+
 
 		server.set_succeeded(Approach_WallResult(arrived=True))
 
@@ -198,9 +204,8 @@ class wall_starer:
 
 if __name__ == '__main__':
 
-	# Instanciate the mover and giv it a distance of 1 meter
-	stopDistance = 1.0
-	ws = wall_starer(stopDistance)
+	# Instanciate the mover and giv it an aggressiveness of 2
+	ws = wall_starer(aggressiveness=2)
 
 	# Create wall approach server
 	server = actionlib.SimpleActionServer('approach_wall', Approach_WallAction, ws.Approach, False)
