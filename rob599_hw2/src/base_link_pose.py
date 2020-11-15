@@ -5,8 +5,16 @@ import sys
 
 import tf
 
-from nav_msgs.msg      import Odometry
-from geometry_msgs.msg import PoseStamped
+from std_msgs.msg 		import String
+from nav_msgs.msg       import Odometry
+from tf.transformations import euler_from_quaternion
+from geometry_msgs.msg  import PoseStamped
+
+
+def heading(q):
+    """A helper function to getnerate quaternions from yaws."""
+
+	return euler_from_quaternion(*q)[2]
 
 
 def BaseLink_CallBack(msg):
@@ -15,9 +23,19 @@ def BaseLink_CallBack(msg):
 	p.header = msg.header
 	p.pose = msg.pose.pose
 
-	pose = listener.transformPose('map', p)
+	try:
+		pose = listener.transformPose('map', p)
+		pub_pose.publish(pose)
 
-	publisher.publish(pose)
+		txt = "[X:{0:3.2f},  Y:{1:3.2f}, 0:{3.2}]". format( pose_msg.datapose.position.x,
+	 														pose_msg.pose.position.y,
+															heading(pose_msg.pose.orientation):)
+
+
+	except:
+		txt = "[X,  Y,  0]"
+
+	pub_text.publish(txt)
 
 
 
@@ -27,7 +45,8 @@ if __name__ == '__main__':
 
 	# Set up the filter.
 	subscriber = rospy.Subscriber('odom', Odometry, BaseLink_CallBack, queue_size=1)
-	publisher  = rospy.Publisher('base_link_pose', PoseStamped, queue_size=1)
+	pub_pose   = rospy.Publisher('base_link_pose', PoseStamped, queue_size=1)
+	pub_text   = rospy.Publisher('base_link_text', PoseStamped, queue_size=1)
 
 	listener = tf.TransformListener()
 

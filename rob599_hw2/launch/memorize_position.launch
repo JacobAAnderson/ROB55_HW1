@@ -1,0 +1,19 @@
+<!--
+ROB599 Homwork 1 - Staring at walls
+Jake Anderson
+Oct 24, 2020
+-->
+
+
+<launch>
+
+	<!-- Start the laser filter node. -->
+	<node pkg="rob599_hw2" name="base_link_pose" type="base_link_pose.py" >
+	</node>
+
+	<!-- Start the RVIZ marker node. -->
+	<node pkg="rob599_hw1" name="memorize_position" type="memorize_position.py" >
+	</node>
+
+
+</launch>
