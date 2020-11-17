@@ -1,0 +1,8 @@
+# goal
+string location
+---
+# result
+bool arrived
+---
+# feedback
+string progress

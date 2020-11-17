@@ -1,0 +1,8 @@
+# goal
+bool patrol
+---
+# result
+bool arrived
+---
+# feedback
+string progress

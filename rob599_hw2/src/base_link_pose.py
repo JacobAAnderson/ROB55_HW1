@@ -12,9 +12,9 @@ from geometry_msgs.msg  import PoseStamped
 
 
 def heading(q):
-    """A helper function to getnerate quaternions from yaws."""
+	"""A helper function to getnerate quaternions from yaws."""
 
-	return euler_from_quaternion(*q)[2]
+	return euler_from_quaternion([q.x, q.y, q.z, q.w])[2]
 
 
 def BaseLink_CallBack(msg):
@@ -27,10 +27,9 @@ def BaseLink_CallBack(msg):
 		pose = listener.transformPose('map', p)
 		pub_pose.publish(pose)
 
-		txt = "[X:{0:3.2f},  Y:{1:3.2f}, 0:{3.2}]". format( pose_msg.datapose.position.x,
-	 														pose_msg.pose.position.y,
-															heading(pose_msg.pose.orientation):)
-
+		txt = "[X:{0:3.2f},  Y:{1:3.2f}, 0:{2:3.2}]". format( msg.pose.pose.position.x,
+	 														msg.pose.pose.position.y,
+															heading(msg.pose.pose.orientation) )
 
 	except:
 		txt = "[X,  Y,  0]"
@@ -46,7 +45,7 @@ if __name__ == '__main__':
 	# Set up the filter.
 	subscriber = rospy.Subscriber('odom', Odometry, BaseLink_CallBack, queue_size=1)
 	pub_pose   = rospy.Publisher('base_link_pose', PoseStamped, queue_size=1)
-	pub_text   = rospy.Publisher('base_link_text', PoseStamped, queue_size=1)
+	pub_text   = rospy.Publisher('base_link_text', String, queue_size=1)
 
 	listener = tf.TransformListener()
 
