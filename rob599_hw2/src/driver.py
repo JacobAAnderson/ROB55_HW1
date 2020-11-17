@@ -88,11 +88,20 @@ class driver:
 
 	def feedback_callback(self, feedback):
 
+<<<<<<< HEAD
+=======
+		print("Feedback Typp: {0}".format(type(feedback)))
+
+>>>>>>> d6bc2eac228e253473f970c7650e0ce352990a6f
 		try:
 			self.action.publish_feedback(GoToPlaceFeedback(progress= "Moving to: {0}".format(self.target)))
 		except:
 			self.action.publish_feedback(PatrolFeedback(progress= "Moving to: {0}".format(self.target)))
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> d6bc2eac228e253473f970c7650e0ce352990a6f
 	def Patroling(self, goal):
 
 		print("Patroling {}".format(goal.patrol))
