@@ -1,17 +1,28 @@
 #!/usr/bin/env python3
 
 import sys
-#import rospy
+import rospy
+import actionlib
 
 import tkinter as tk
 
-from std_msgs.msg import String
+from std_msgs.msg   import String
+from rob599_hw2.srv import location
+from rob599_hw2.msg import GoToPlaceAction, GoToPlaceGoal, GoToPlaceResult
+from rob599_hw2.msg import PatrolAction, PatrolGoal, PatrolResult
 
 class Interface:
 
 	def __init__(self):
 
 		self.locations = {}
+		self.sevice_client = rospy.ServiceProxy('location', location)
+		
+		self.action = actionlib.SimpleActionClient('goto_place', GoToPlaceAction)
+		self.action.wait_for_server()
+
+		self.patrol = actionlib.SimpleActionClient('patrol', PatrolAction)
+		self.action.wait_for_server()
 
 		window = tk.Tk()
 		window.title("Robot Location Tracker")
@@ -22,12 +33,13 @@ class Interface:
 
 
 		# --- Create Lables ----------------------------
-		frameIdx = [0,1,1,2,2]
+		frameIdx = [0,1,1,2,2,3]
 		text = ["\nDrive Robot with keyboard / RVIZ\n",
 				"Robots Current Pose: ",
 				"[X,  Y,  0]",
 				"\n\nAdd location by type its name below\nThen press the Add button\n",
-				"\nSaved Locations\nClick on button to have the robot return to that location"
+				"\nSaved Locations\nClick on button to have the robot return to that location",
+				"",
 				]
 
 		self.labels = [tk.Label(master=self.frames[i], text=t) for i, t in zip(frameIdx, text)]
@@ -37,6 +49,7 @@ class Interface:
 		self.labels[2].grid(row=0, column=1)
 		self.labels[3].grid(row=0)
 		self.labels[4].grid(row=2)
+		self.labels[5].grid(row=0, column=1)
 
 
 		# --- Create Entry Boxes --------------------------------
@@ -78,7 +91,15 @@ class Interface:
 
 		print("Added Location: {0}".format(name))
 
-		self.locations[name] = self.robotPose 	# Get Robot Pose
+#		self.locations[name] = self.robotPose 	# Get Robot Pose
+		try:
+			tf = self.sevice_client(name)
+
+		except rospy.ServiceException as e:
+			rospy.logwarn('Service call failed for {0}: {1}'.format(name, e))
+			return
+
+		if not tf: return
 
 		self.buttons.append(tk.Button(	master=self.frames[3], 		# Add the new location to the GUI list
 										text=name,
@@ -116,16 +137,49 @@ class Interface:
 
 
 	def Goto_Location(self, loc):
+		print("Go to Location: {0}".format(loc))
 
-		print("Go to Location")
-		print(loc)
-		print(self.locations[loc])
+		goal = GoToPlaceGoal(location=loc)
+		self.action.send_goal(goal, done_cb=self.done_callback,
+									active_cb=self.active_callback,
+									feedback_cb=self.action_feedback)
 
 
 	def Patrol(self, start):
 		print("Patroling? {0}".format(start))
 
+		goal = PatrolGoal(patrol=True)
+		self.patrol.send_goal(goal, done_cb=self.done_callback,
+									active_cb=self.active_callback,
+									feedback_cb=self.action_feedback)
 
+
+	# This callback will be called when the action is complete.
+	def done_callback(self, status, result):
+		# The status argument tells you if the action succeeded.  Sometimes actions that did not succeed can
+		# return partial results.
+		if status and result == actionlib.GoalStatus.SUCCEEDED:
+			rospy.loginfo('Suceeded with result {0}'.format(result.arrived))
+			self.labels[5]['text'] = "Arrived"
+		else:
+			rospy.loginfo('Failed with result {0}'.format(result.arrived))
+			self.labels[5]['text'] = "Failed"
+
+
+	# This callback will be called when the action becomes active on the server.  If the server is
+	# set up to only handle one action at a time, this will let you know when it's actively working
+	# on your action request.
+	def active_callback(self):
+		rospy.loginfo('Action is active')
+
+
+	def action_feedback(self, feedback):
+#		print("Action Feedback")
+#		print(feedback.progress)
+		self.labels[5]['text'] = "{0}".format(feedback.progress)
+
+
+	# Get Updated Pose Information
 	def UpdateLocation(self, pose_msg):
 
 		self.labels[2]['text'] = "{0}". format( pose_msg.data)
@@ -136,5 +190,7 @@ class Interface:
 if __name__ == '__main__':
 
 	rospy.init_node('human_Interface_node', argv=sys.argv)
+
+	rospy.wait_for_service('location')
 
 	gui = Interface()
