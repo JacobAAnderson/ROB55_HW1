@@ -6,6 +6,7 @@ import sys
 import tf
 
 from std_msgs.msg 		import String
+from nav_msgs.msg       import Odometry
 from tf.transformations import euler_from_quaternion
 from geometry_msgs.msg  import PoseStamped
 
@@ -14,6 +15,26 @@ def heading(q):
 	"""A helper function to getnerate quaternions from yaws."""
 
 	return euler_from_quaternion([q.x, q.y, q.z, q.w])[2]
+
+
+def BaseLink_CallBack(msg):
+
+	p = PoseStamped()
+	p.header = msg.header
+	p.pose = msg.pose.pose
+
+	try:
+		pose = listener.transformPose('map', p)
+		pub_pose.publish(pose)
+
+		txt = "[X:{0:3.2f},  Y:{1:3.2f}, 0:{2:3.2}]". format( msg.pose.pose.position.x,
+	 														msg.pose.pose.position.y,
+															heading(msg.pose.pose.orientation) )
+
+	except:
+		txt = "[X,  Y,  0]"
+
+	pub_text.publish(txt)
 
 
 
@@ -29,37 +50,5 @@ if __name__ == '__main__':
 	listener = tf.TransformListener()
 
 	print("Node initialized")
-
-
-	p = PoseStamped()
-	p.header.frame_id = 'base_link'
-	p.pose.position.x = 0.0
-	p.pose.position.y = 0.0
-	p.pose.position.z = 0.0
-	p.pose.orientation.x = 0.0
-	p.pose.orientation.y = 0.0
-	p.pose.orientation.z = 0.0
-	p.pose.orientation.w = 0.0
-
-
-	rate = rospy.Rate(10)
-
-	while not rospy.is_shutdown():
-
-		p.header.stamp = rospy.Time.now()
-
-		try:
-			pose = listener.transformPose('map', p)
-			pub_pose.publish(pose)
-
-			txt = "[X:{0:3.2f},  Y:{1:3.2f}, H:{2:3.2}]". format( msg.pose.pose.position.x,
-			 													msg.pose.pose.position.y,
-																heading(msg.pose.pose.orientation) )
-
-		except:
-			txt = "[X,  Y,  H]"
-
-		pub_text.publish(txt)
-
-		# Give control over to ROS.
-		rospy.spin()
+	# Give control over to ROS.
+	rospy.spin()
