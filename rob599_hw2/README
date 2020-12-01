@@ -1,0 +1,36 @@
+Jacob Anderson
+ROB 599 Software Dev
+Homework 1
+October 27, 2020
+
+This package should install with catkin_make
+
+The launch file is: memorize_position.launch
+
+If you have issues with the GUI please update tkinter as per https://realpython.com/python-gui-tkinter/
+
+
+Topics of interest:
+    Base_link pose:   'base_link_pose'
+    2D base link pose as text: 'base_link_text'
+
+
+Services:
+    Add place to list : 'location'
+    Save list of places to file: 'save_places'
+    Open file of saved places: 'open_places'
+
+
+Action Servers:
+    Go to an individual location: 'goto_place'
+        Topics:
+          goal.location         --> string
+          feedback.progress     --> string
+          result.arrived        --> bool
+
+
+    Patrol: 'patrol'
+        Topics:
+          goal.patrol           --> bool
+          feedback.progress     --> string
+          result.arrived        --> bool
