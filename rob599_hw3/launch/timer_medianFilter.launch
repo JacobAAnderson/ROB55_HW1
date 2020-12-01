@@ -1,0 +1,18 @@
+<!--
+ROB599 Homwork 3 - timer node to median filter back to timmer
+Jake Anderson
+Oct 24, 2020
+-->
+
+
+<launch>
+
+	<!-- Start the timer node. -->
+	<node pkg="rob599_hw3" name="laser_timmer" type="timer.py" >
+	</node>
+
+  <!-- Start median filter node. -->
+	<node pkg="rob599_hw3" name="laser_filter" type="median_filter.py" >
+	</node>
+
+</launch>

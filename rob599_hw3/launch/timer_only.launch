@@ -1,0 +1,15 @@
+<!--
+ROB599 Homwork 3 - timer node sends messages to itself.
+Jake Anderson
+Oct 24, 2020
+-->
+
+
+<launch>
+
+	<!-- Start the timer node. -->
+	<node pkg="rob599_hw3" name="laser_timmer" type="timer.py" >
+	</node>
+
+
+</launch>
