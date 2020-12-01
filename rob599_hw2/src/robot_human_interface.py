@@ -8,6 +8,7 @@ import tkinter as tk
 
 from std_msgs.msg   import String
 from rob599_hw2.srv import location
+from rob599_hw2.srv import save_places
 from rob599_hw2.msg import GoToPlaceAction, GoToPlaceGoal, GoToPlaceResult
 from rob599_hw2.msg import PatrolAction, PatrolGoal, PatrolResult
 
@@ -16,8 +17,11 @@ class Interface:
 	def __init__(self):
 
 		self.locations = {}
-		self.sevice_client = rospy.ServiceProxy('location', location)
-		
+
+		self.sevice_client0 = rospy.ServiceProxy('location', location)
+		self.sevice_client1 = rospy.ServiceProxy('save_places', save_places)
+		self.sevice_client2 = rospy.ServiceProxy('open_places', save_places)
+
 		self.action = actionlib.SimpleActionClient('goto_place', GoToPlaceAction)
 		self.action.wait_for_server()
 
@@ -53,19 +57,27 @@ class Interface:
 
 
 		# --- Create Entry Boxes --------------------------------
-		frameIdx = [2]
-		widths = [25]
+		frameIdx = [2, 4, 4]
+		widths = [25, 25, 25]
 		self.entrys = [tk.Entry( master=self.frames[i],  width=w) for i, w in zip(frameIdx, widths)]
 		self.entrys[0].grid(row=1, column=0, sticky="nsew")
+		self.entrys[1].grid(row=2, column=0, sticky="nsew")
+		self.entrys[2].grid(row=3, column=0, sticky="nsew")
 
 
 		# --- Create Buttons -------------------------------------
-		frameIdx = [2]
-		text = ["Add"]
-		funs = [self.Add_Location]
+		frameIdx = [2,4,4]
+		text = ["Add",
+				"Save Places",
+				"Open File"]
+		funs = [self.Add_Location,
+				self.Save_Locations,
+				self.Open_Locations]
 
 		self.buttons = [tk.Button(master=self.frames[i], text=t, command=c) for i,t,c in zip(frameIdx, text, funs)]
 		self.buttons[0].grid(row=1, column=1, sticky="nsew")
+		self.buttons[1].grid(row=2, column=1, sticky="nsew")
+		self.buttons[2].grid(row=3, column=1, sticky="nsew")
 
 
 		# --- Pack the frames --------------------------------------
@@ -93,7 +105,7 @@ class Interface:
 
 #		self.locations[name] = self.robotPose 	# Get Robot Pose
 		try:
-			tf = self.sevice_client(name)
+			tf = self.sevice_client0(name)
 
 		except rospy.ServiceException as e:
 			rospy.logwarn('Service call failed for {0}: {1}'.format(name, e))
@@ -107,33 +119,59 @@ class Interface:
 										)
 
 		idx = len(self.buttons) - 1
-		self.buttons[idx].grid(row=idx-1, column=0, sticky="nsew")
+
+		print(idx)
+
+		self.buttons[idx].grid(row=idx-3, column=0, sticky="nsew")
 
 		self.frames[3].pack(fill=tk.BOTH)
 
 		# --- Give the option to patrol once there is more than one locaiton
-		if idx == 2:
+		if idx == 4:
+			print("Adding Patrol Buttons")
+			self.patrol_buttons()
 
-			self.labels.append(tk.Label(master=self.frames[4],
-										text="\nStart or stop robot patroling with the buttons below"),
-										)
-			self.labels[-1].grid(row=0, column=1, sticky="nsew")
 
-			p_btn = tk.Button(	master=self.frames[4],
-								text="Patrol",
-								command= lambda : self.Patrol(True),
-								)
 
-			p_btn.grid(row=1, column=1, sticky="nsew")
+	def Save_Locations(self):
+		rospy.loginfo("Saving Places")
 
-			s_btn = tk.Button(	master=self.frames[4],
-								text="Stop Patrol",
-								command=lambda : self.Patrol(False),
-								)
+		# --- Add the new location to the list ----------
+		name = self.entrys[1].get() 			# Get name from the text entry
+		self.entrys[1].delete(0, tk.END)		# Clear the text entry
 
-			s_btn.grid(row=1, column=2, sticky="nsew")
+		print(" Saving Locations as: {0}".format(name))
 
-			self.frames[4].pack(fill=tk.BOTH)
+		#		self.locations[name] = self.robotPose 	# Get Robot Pose
+		try:
+			tf = self.sevice_client1(name)
+
+		except rospy.ServiceException as e:
+				rospy.logwarn('Service call failed for {0}: {1}'.format(name, e))
+				return
+
+
+
+	def Open_Locations(self):
+
+		# --- Add the new location to the list ----------
+		name = self.entrys[2].get() 			# Get name from the text entry
+		self.entrys[2].delete(0, tk.END)		# Clear the text entry
+
+		print("Opening Location: {0}".format(name))
+
+#		self.locations[name] = self.robotPose 	# Get Robot Pose
+		try:
+			tf = self.sevice_client2(name)
+
+			print(tf.saved)
+
+		except rospy.ServiceException as e:
+			rospy.logwarn('Service call failed for {0}: {1}'.format(name, e))
+			return
+
+		if tf.saved:
+			self.patrol_buttons()
 
 
 	def Goto_Location(self, loc):
@@ -152,6 +190,31 @@ class Interface:
 		self.patrol.send_goal(goal, done_cb=self.done_callback,
 									active_cb=self.active_callback,
 									feedback_cb=self.action_feedback)
+
+
+	def patrol_buttons(self):
+
+		print("Adding Patrol Buttons")
+		self.labels.append(tk.Label(master=self.frames[4],
+									text="\nStart or stop robot patroling with the buttons below"),
+									)
+		self.labels[-1].grid(row=0, column=0, sticky="nsew")
+
+		p_btn = tk.Button(	master=self.frames[4],
+							text="Patrol",
+							command= lambda : self.Patrol(True),
+							)
+
+		p_btn.grid(row=1, column=0, sticky="nsew")
+
+		s_btn = tk.Button(	master=self.frames[4],
+							text="Stop Patrol",
+							command=lambda : self.Patrol(False),
+							)
+
+		s_btn.grid(row=1, column=1, sticky="nsew")
+
+		self.frames[4].pack(fill=tk.BOTH)
 
 
 	# This callback will be called when the action is complete.
