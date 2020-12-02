@@ -8,11 +8,13 @@ Oct 24, 2020
 <launch>
 
 	<!-- Start the timer node. -->
-	<node pkg="rob599_hw3" name="laser_timmer" type="timer.py" >
+	<node pkg="rob599_hw3" name="laser_timmer" type="timer.py" output="screen" >
+		<remap from="/timer/queued_scan" to="/median_filter/laser_scan_in"/>
 	</node>
 
   <!-- Start median filter node. -->
-	<node pkg="rob599_hw3" name="laser_filter" type="median_filter.py" >
+	<node pkg="rob599_hw3" name="laser_filter" type="median_filter.py" output="screen">
+		<remap from="/median_filter/laser_scan_filterd" to="/timer/clocked_scan"/>
 	</node>
 
 </launch>

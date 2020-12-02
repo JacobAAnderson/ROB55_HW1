@@ -8,7 +8,8 @@ Oct 24, 2020
 <launch>
 
 	<!-- Start the timer node. -->
-	<node pkg="rob599_hw3" name="laser_timmer" type="timer.py" >
+	<remap from="/timer/queued_scan" to="/timer/clocked_scan"/>
+	<node pkg="rob599_hw3" name="laser_timmer" type="timer.py" output="screen" >
 	</node>
 
 
