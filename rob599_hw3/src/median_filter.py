@@ -62,7 +62,7 @@ if __name__ == '__main__':
 	rospy.loginfo("Starting 'laser_filter' Node")
 
 	# Set up a subscriber and publisher.
-	sub = rospy.Subscriber('base_scan', LaserScan, callback )
-	pub = rospy.Publisher( 'base_scan_filterd', LaserScan, queue_size=1 )
+	sub = rospy.Subscriber('median_filter/laser_scan_in', LaserScan, callback )
+	pub = rospy.Publisher( 'median_filter/laser_scan_filterd', LaserScan, queue_size=1 )
 
 	rospy.spin()

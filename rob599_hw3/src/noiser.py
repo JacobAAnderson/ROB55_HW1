@@ -18,7 +18,7 @@ def callback(lidar_msg):
 	else:
 		var = 0.01
 
-	print("\n\nVariance: {0}\n".format(var))
+	rospy.loginfo("Variance: {0}".format(var))
 
 
 	newRanges = []
@@ -41,7 +41,7 @@ if __name__ == '__main__':
 	rospy.loginfo("Starting 'laser_noise' Node")
 
 	# Set up a subscriber and publisher.
-	sub = rospy.Subscriber('base_scan', LaserScan, callback )
-	pub = rospy.Publisher( 'base_scan_noised', LaserScan, queue_size=1 )
+	sub = rospy.Subscriber('/noiser/laser_scan_in', LaserScan, callback )
+	pub = rospy.Publisher( '/noiser/laser_scan_noised', LaserScan, queue_size=1 )
 
 	rospy.spin()
