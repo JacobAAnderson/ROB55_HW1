@@ -22,5 +22,4 @@ Oct 24, 2020
 	<remap from="/noiser/laser_scan_noised" to="/timer/clocked_scan"/>
   </node>
 
-
 </launch>
