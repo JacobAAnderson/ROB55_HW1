@@ -8,7 +8,7 @@ Oct 24, 2020
 <launch>
 
 	<!-- Start the timer node. -->
-	<remap from="base_scan" to="/noiser/laser_scan_in"/>
+	<remap from="/noiser/laser_scan_in" to="base_scan"/>
 	<node pkg="rob599_hw3" name="laser_noise" type="noiser.py" output="screen" >
 	</node>
 
