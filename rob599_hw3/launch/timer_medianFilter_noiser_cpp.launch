@@ -1,0 +1,25 @@
+<!--
+ROB599 Homwork 3 - timer node to median filter back to noiser back to timmer
+Jake Anderson
+Oct 24, 2020
+-->
+
+
+<launch>
+
+	<!-- Start the timer node. -->
+	<node pkg="rob599_hw3" name="laser_timmer" type="timer_node" output="screen" >
+		<remap from="/timer/queued_scan" to="/median_filter/laser_scan_in"/>
+	</node>
+
+  <!-- Start median filter node. -->
+	<node pkg="rob599_hw3" name="laser_filter" type="median_filter_node" output="screen">
+		<remap from="/median_filter/laser_scan_filterd" to="/noiser/laser_scan_in"/>
+	</node>
+
+  <!-- Start the median filter node. -->
+  <node pkg="rob599_hw3" name="laser_noiser" type="laser_noiser_node" output="screen" >
+	<remap from="/noiser/laser_scan_noised" to="/timer/clocked_scan"/>
+  </node>
+
+</launch>

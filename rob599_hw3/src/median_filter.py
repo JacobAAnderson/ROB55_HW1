@@ -18,7 +18,7 @@ def callback(lidar_msg):
 	else:
 		filterSize = 10
 
-	print("\n\nFilter Size: {0}\n".format(filterSize))
+	rospy.loginfo("Filter Size: {0}".format(filterSize))
 
 
 	rangeSize = len(lidar_msg.ranges) -1              # Size of the lidar message
