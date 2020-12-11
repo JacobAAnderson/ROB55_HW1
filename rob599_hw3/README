@@ -1,0 +1,25 @@
+Jacob Anderson
+Home Work 3
+Dec 10, 2020
+
+
+There are launch files for each node to handle remapping topics.
+
+
+ --- Python Nodes ---
+Median Filter: median_filter.launch
+Noiser:        noiser.launch
+Timer Only:    timer_only.launch
+
+Timer with Median Filter:            timer_medianFilter.launch
+Timer with Median Filter and Noiser: timer_medianFilter.launch
+
+
+
+ --- Cpp Nodes ---
+Median filter: median_filter_cpp.launch
+Noiser:        noiser_cpp.launch
+Timer Only:    timer_only_cpp.launch
+
+Timer with Median Filter:            timer_medianFilter_cpp.launch
+Timer with Median Filter and Noiser: timer_medianFilter_noiser_cpp.launch

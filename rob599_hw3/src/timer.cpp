@@ -1,13 +1,14 @@
 /*
 	Jacob Anderson
 	ROB599 HW3
-	Dec 1, 2020
+	Dec 10, 2020
 */
-// include the basic ROS stuff, and the Int64 definition.
+
 #include <vector>
 #include <ros/ros.h>
 #include "sensor_msgs/LaserScan.h"
 #include <numeric>
+#include <fstream>
 
 class timer_node {
 
@@ -37,34 +38,41 @@ public:
 	}
 
 
-	void callback1(const sensor_msgs::LaserScan::ConstPtr& scan){             //  Callback to send out the laser scans
+	void callback1(const sensor_msgs::LaserScan::ConstPtr& scan){             	//  Callback to send out the laser scans
 
-		if(count > 100) return;                                                 //  Stop after 100 Laser Scans
+		if(count > 100) return;                                                 	//  Stop after 100 Laser Scans
 
-    count++;                                                                //  Keep track of how many laser scans have been sent
+    count++;                                                                	//  Keep track of how many laser scans have been sent
 
-    manifest.insert(std::pair<int, ros::Time> (count, ros::Time::now()) );  //  Make note of current time
+    manifest.insert(std::pair<int, ros::Time> (count, ros::Time::now()) );  	//  Make note of current time
 
-		pub.publish(*scan);                                                     //  Send out the scan line
+		pub.publish(*scan);                                                     	//  Send out the scan line
 	}
 
 
-  void callback2(const sensor_msgs::LaserScan::ConstPtr& scan){             // Callback for the returning laser scans
+  void callback2(const sensor_msgs::LaserScan::ConstPtr& scan){             	// Callback for the returning laser scans
 
-  if ( manifest.find(scan->header.seq) == manifest.end() ) return;          //  Make Sure the key exists
+  	if ( manifest.find(scan->header.seq) == manifest.end() ) return;          //  Make Sure the key exists
 
-  ros::Duration dt = ros::Time::now()- manifest[scan->header.seq];          //  Elapsed time for nodes to work
+  	ros::Duration dt = ros::Time::now()- manifest[scan->header.seq];          //  Elapsed time for nodes to work
 
-  std::cout << "Duration: " << dt <<  std::endl;
+  	trip_times.push_back(dt.toSec());                                         //  Hold onto the duration
 
-  trip_times.push_back(dt.toSec());                                         //  Hold onto the duration
+  	ROS_INFO("Duration: %f", dt.toSec() );
 
-  if(scan->header.seq == 100){                                              //  After 100 messages, find the average time
+  	if(scan->header.seq == 100){                                              //  After 100 messages, find the average time
 
-    double average = std::accumulate( trip_times.begin(), trip_times.end(), 0.0) / trip_times.size();
+    	double average = std::accumulate( trip_times.begin(), trip_times.end(), 0.0) / trip_times.size();
 
-    ROS_INFO("Average: %f", average);
-    }
+    	ROS_INFO("Average: %f\n\n\n\n", average);
+
+			// Write Avarage to file
+			std::ofstream myfile;
+  		myfile.open ("/home/ubuntu/rob599_homeWork/cpp_average_time.txt");
+  		myfile << "Average Time:" << average << std::endl;
+  		myfile.close();
+
+    	}
   }
 
 };

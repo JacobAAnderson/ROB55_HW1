@@ -33,7 +33,7 @@ class timer:
 
 			rospy.loginfo("Timming is complete, Ave: {}".format(ave))
 
-			f = open("/home/ubuntu/rob599_homeWork/aveTime.txt","w")
+			f = open("/home/ubuntu/rob599_homeWork/py_average_time.txt","w")
 			f.write( "Average Time: {}".format(ave) )
 			f.close()
 
@@ -46,7 +46,7 @@ class timer:
 
 		self.count = self.count+1
 
-		self.manifest[lidar_msg.header.seq] = rospy.get_time()
+		self.manifest[self.count] = rospy.get_time()
 
 		self.pub.publish(lidar_msg)
 

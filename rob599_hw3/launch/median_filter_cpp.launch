@@ -1,0 +1,16 @@
+<!--
+ROB599 Homwork 3 - timer node sends messages to itself.
+Jake Anderson
+Oct 24, 2020
+-->
+
+
+<launch>
+
+	<!-- Start the timer node. -->
+	<remap from="base_scan" to="median_filter/laser_scan_in"/>
+	<node pkg="rob599_hw3" name="laser_filter" type="median_filter_node" output="screen" >
+	</node>
+
+
+</launch>
