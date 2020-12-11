@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import rospy
 
@@ -13,6 +14,9 @@ class timer:
 		self.sub1 = rospy.Subscriber('base_scan',    LaserScan, self.callback1, queue_size=1   )
 		self.sub2 = rospy.Subscriber('timer/clocked_scan', LaserScan, self.callback2,  queue_size=100 )
 		self.pub  = rospy.Publisher( 'timer/queued_scan',  LaserScan, queue_size=100 )
+
+		dir_path = os.path.dirname(os.path.realpath(__file__))
+		self.file = dir_path + "/py_average_time.txt"
 
 		self.manifest = {}
 		self.count = 0
@@ -33,11 +37,11 @@ class timer:
 
 			rospy.loginfo("Timming is complete, Ave: {}".format(ave))
 
-			f = open("/home/ubuntu/rob599_homeWork/py_average_time.txt","w")
+			f = open(self.file,"w")
 			f.write( "Average Time: {}".format(ave) )
 			f.close()
 
-			rospy.loginfo("Ave saved to file")
+			rospy.loginfo("Average Time Saved to File: {0}".format(self.file))
 
 			return
 

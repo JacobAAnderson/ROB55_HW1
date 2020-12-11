@@ -4,11 +4,16 @@
 	Dec 10, 2020
 */
 
+#include <string>
 #include <vector>
 #include <ros/ros.h>
 #include "sensor_msgs/LaserScan.h"
 #include <numeric>
 #include <fstream>
+#include <stdio.h>  /* defines FILENAME_MAX */
+#include <unistd.h>
+#define GetCurrentDir getcwd
+
 
 class timer_node {
 
@@ -23,6 +28,8 @@ protected:
   std::map<int, ros::Time> manifest;    //  Keeps track of when the outgoing scan was sent
   int count;
 
+	std::string file_path;
+
 
 public:
 
@@ -35,6 +42,15 @@ public:
 
     // Initialize the count
     count = 0;
+
+		char cCurrentPath[FILENAME_MAX];
+		if (GetCurrentDir(cCurrentPath, sizeof(cCurrentPath))){
+	      cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
+			}
+
+//	 printf ("The current working directory is %s\n", cCurrentPath + "cpp_average_time.txt");
+
+	 file_path = std::string(cCurrentPath) + "/cpp_average_time.txt";
 	}
 
 
@@ -68,10 +84,11 @@ public:
 
 			// Write Avarage to file
 			std::ofstream myfile;
-  		myfile.open ("/home/ubuntu/rob599_homeWork/cpp_average_time.txt");
+  		myfile.open (file_path);
   		myfile << "Average Time:" << average << std::endl;
   		myfile.close();
 
+			ROS_INFO_STREAM("Average Time Saved To: " << file_path);
     	}
   }
 

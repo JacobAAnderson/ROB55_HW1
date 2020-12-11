@@ -8,7 +8,7 @@ Oct 24, 2020
 <launch>
 
 	<!-- Start the timer node. -->
-	<remap from="base_scan" to="median_filter/laser_scan_in"/>
+	<remap from="median_filter/laser_scan_in" to="base_scan"/>
 	<node pkg="rob599_hw3" name="laser_filter" type="median_filter_node" output="screen" >
 	</node>
 
