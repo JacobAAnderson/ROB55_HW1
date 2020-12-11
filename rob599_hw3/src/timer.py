@@ -12,7 +12,7 @@ class timer:
 
 		self.sub1 = rospy.Subscriber('base_scan',    LaserScan, self.callback1, queue_size=1   )
 		self.sub2 = rospy.Subscriber('timer/clocked_scan', LaserScan, self.callback2,  queue_size=100 )
-		self.pub  = rospy.Publisher( 'timer/queued_scan',  LaserScan, queue_size=1 )
+		self.pub  = rospy.Publisher( 'timer/queued_scan',  LaserScan, queue_size=100 )
 
 		self.manifest = {}
 		self.count = 0
@@ -46,7 +46,7 @@ class timer:
 
 		self.count = self.count+1
 
-		self.manifest[lidar_msg.header.frame_id] = rospy.get_time()
+		self.manifest[lidar_msg.header.seq] = rospy.get_time()
 
 		self.pub.publish(lidar_msg)
 
@@ -54,7 +54,7 @@ class timer:
 
 	def callback2(self, lidar_msg):
 
-		dt = rospy.get_time()  - self.manifest[lidar_msg.header.frame_id]
+		dt = rospy.get_time()  - self.manifest[lidar_msg.header.seq]
 
 		self.times.append(dt)
 

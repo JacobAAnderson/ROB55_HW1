@@ -133,7 +133,6 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/rob599_hw3_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -149,6 +148,24 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+add_executable(median_filter_node src/median_filter.cpp)
+target_link_libraries(median_filter_node
+  ${catkin_LIBRARIES}
+)
+
+
+add_executable(laser_noiser_node src/noiser.cpp)
+target_link_libraries(laser_noiser_node
+  ${catkin_LIBRARIES}
+)
+
+
+add_executable(timer_node src/timer.cpp)
+target_link_libraries(timer_node
+  ${catkin_LIBRARIES}
+)
+
 
 #############
 ## Install ##
