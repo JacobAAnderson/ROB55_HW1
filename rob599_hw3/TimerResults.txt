@@ -1,0 +1,17 @@
+Timer Results
+
+Nodes Running                   Average Run Times [sec]
+
+                                Python        Cpp
+Timer Only                      0.0002199     0.0671
+Timer + Median Filter           0.2119        0.0680
+Timer + Median Filter + Noise   0.437         0.0686
+
+
+The python script behaved as expected. ~0 sec with no other processes running.
+Then increasing by ~0.25 sec to run one process and doubling that time to run two processes.
+
+The cpp timer did not run as expected. The timer by itself took ~0.067 sec to run by itself.
+I'm not sure were that came from, possibly the mapped container that was used to keep track of the scan lines.
+Then there was a small increase in time of ~0.001 sec for each additional node that was ran.
+This is small increase in time seems more typical of a cpp process.
