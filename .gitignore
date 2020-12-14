@@ -1,2 +1,9 @@
 # Exclude movie files .mov
 *.mov
+
+# Exclude compressed files
+*.zip
+*.tar
+
+# Exclude these file
+.DS_Store
