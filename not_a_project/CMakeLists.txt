@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   message_generation
+  actionlib
   actionlib_msgs
 )
 
@@ -100,8 +101,20 @@ add_dependencies(filter_node not_a_project_gencpp)
 # --- Part 5, Homework 1 in cpp ---
 add_executable(wall_aproach_node src/wall_approach.cpp)
 target_link_libraries(wall_aproach_node  ${catkin_LIBRARIES} )
-add_dependencies(wall_aproach_node not_a_project_gencpp)
+add_dependencies(
+  wall_aproach_node
+  ${wall_aproach_node_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
 
 add_executable(laser_front_filter src/front_filter.cpp)
 target_link_libraries(laser_front_filter  ${catkin_LIBRARIES} )
 add_dependencies(laser_front_filter not_a_project_gencpp)
+
+add_executable(Wall_Aproach_action_client src/aproachWall_actionClient.cpp)
+target_link_libraries(Wall_Aproach_action_client  ${catkin_LIBRARIES} )
+add_dependencies(
+  Wall_Aproach_action_client
+  ${Wall_Aproach_action_client_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)

@@ -47,7 +47,7 @@ public:
 			angle = angle + scan.angle_increment;
 			}
 
-		std::cout << "Angles: " << angle << ",  " << (scan.angle_max + scan.angle_increment) << std::endl;
+//		std::cout << "Angles: " << angle << ",  " << (scan.angle_max + scan.angle_increment) << std::endl;
 
 		float minAngle = *std::min_element(angles.begin(), angles.end());
 		float maxAngle = *std::max_element(angles.begin(), angles.end());

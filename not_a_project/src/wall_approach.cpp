@@ -47,9 +47,9 @@ protected:
 	ros::ServiceServer service;
 	ros::Time t_last;
 
-//	actionlib::SimpleActionServer<not_a_project::approach_wallAction> server;
-
 	geometry_msgs::Twist twist;
+
+  actionlib::SimpleActionServer<not_a_project::approach_wallAction> server;
 
 	float x;
 	float sig;
@@ -62,16 +62,17 @@ protected:
 
 public:
 
-	Wall_Aproach(){
+	Wall_Aproach():
+		server(node, "wall_aproach", boost::bind(&Wall_Aproach::action_callback, this, _1), false)
+	{
 		// -- Set up the subscriber and publisher
     sub = node.subscribe("filtered_laserscan/front", 1, &Wall_Aproach::callback, this);
 		pub = node.advertise<geometry_msgs::Twist>("cmd_vel", 1);
 
 		service = node.advertiseService("/stopping_distance", &Wall_Aproach::sd_callback, this);
 
-//		server(node, "wall_aproach", boost::bind(&Wall_Aproach::action_callback, _1, &server), false)
-//		server.start();
-//		ROS_INFO("wall_aproach action server started");
+		server.start();
+		ROS_INFO("wall_aproach action server started");
 
 		x = 0.0;
 		sig = 0.0;
@@ -101,7 +102,7 @@ public:
 
 		float min_range = *std::min_element(ranges.begin(), ranges.end());
 
-		if(!is_cal && cal_set.size() <10){                                                  //  Get a calibration set of 100
+		if(!is_cal && cal_set.size() <50){                                        //  Get a calibration set of 100
 			cal_set.push_back(min_range);
 			return;
 		}
@@ -116,7 +117,7 @@ public:
 			t_last = ros::Time::now();
 			is_cal = true;
 
-			ROS_INFO("Lidar Calibration Finised");
+			ROS_INFO("Lidar Calibration Finised, STD: %f", lidar_STD);
 			}
 
 		ros::Duration dt = ros::Time::now()- t_last;
@@ -136,7 +137,7 @@ public:
 		// -- Stoping distance error and speed command--
 		float error = x - distance;
 
-		if( std::abs(error) > lidar_STD * 3) speed = std::tanh(error * 2.0);
+		if( std::abs(error) > lidar_STD * 3) speed = std::tanh(error * 1.5);
 		else speed = 0.0;
 
 //		std::cout << "Dist: " << distance << ", Min Range: " <<min_range << ", Error: " << error << ", Speed: " << speed << std::endl;
@@ -154,7 +155,7 @@ public:
 
 		float dist = request.stopping_distance;
 
-		std::cout << "\n\n\nSet dist: " << dist << "\n\n\n" << std::endl;
+//		std::cout << "\n\n\nSet dist: " << dist << "\n\n\n" << std::endl;
 
 		if(std::isnan(dist) || dist < 0.5 ) response.set = false;
 		else{
@@ -166,32 +167,58 @@ public:
 	}
 
 
-	void action_callback(const not_a_project::approach_wallActionGoalConstPtr &goal,
-		                   actionlib::SimpleActionServer<not_a_project::approach_wallAction> *server)
-		{
-/*
-		ROS_INFO("Goal Recived: %f", goal->distance);
+	void action_callback(const not_a_project::approach_wallGoalConstPtr &goal){
 
-		float dist = goal->distance;
+	ROS_INFO("Goal Recived: %f", goal->distance);
 
-		if(std::isnan(dist) || dist < 0.5 ){
-			server->setPreempted();
-			return;
+	float dist = goal->distance;
+
+	if(std::isnan(dist) || dist < 0.5 ){
+		server.setPreempted();
+		return;
+	}
+
+	distance = dist;
+
+	// -- Let the robot drive and get feedback --
+  not_a_project::approach_wallFeedback feedback;
+
+	float error = x - distance;
+
+	ros::Rate rate(2);
+
+	std::cout << "Thresh: " << (lidar_STD*3.0)
+						<< "Error: " << std::abs(error)
+						<< std::endl;
+
+	while (ros::ok() && std::abs(error) > lidar_STD*3.0) {
+
+		error = x - distance;
+
+		feedback.err = error;
+		server.publishFeedback(feedback);
+
+		ROS_INFO("Action Feedback: %f", error);
+
+		rate.sleep();
 		}
-		else{
-			distance = dist;
-			response.set = true;
-			}
-*/
-		not_a_project::approach_wallActionResult result;
-		}
+
+	ROS_INFO("Action Feedback: Arived");
+
+	not_a_project::approach_wallResult result;
+
+	result.arrived = true;
+
+	server.setSucceeded(result);
+
+	}
 
 }; // --- End Wall_Aproach class ---
 
 
 
-
 int main(int argc, char **argv) {
+
 	// Initialize the node and set up the node handle.
 	ros::init(argc, argv, "wall_aproach_node");
 
