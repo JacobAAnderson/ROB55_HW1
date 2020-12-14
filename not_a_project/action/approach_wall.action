@@ -1,0 +1,8 @@
+# goal
+float64 distance
+---
+# result
+bool arrived
+---
+# feedback
+float64 err

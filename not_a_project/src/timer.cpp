@@ -78,8 +78,6 @@ public:
 
 	 	service_data.request.raw = *scan;
 
-		std::cout << "Callback " << count << std::endl;
-
 
 		// --- Time the sevice call ---
 		ros::Time now = ros::Time::now();

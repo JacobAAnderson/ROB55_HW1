@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   message_generation
+  actionlib_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -41,51 +42,27 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
    FILES
    filter.srv
+   stopping_distance.srv
  )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+ add_action_files(
+   FILES
+   approach_wall.action
+ )
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
    DEPENDENCIES
    std_msgs
    sensor_msgs
+   actionlib_msgs
 )
 
-################################################
-## Declare ROS dynamic reconfigure parameters ##
-################################################
-
-## To declare and build dynamic reconfigure parameters within this
-## package, follow these steps:
-## * In the file package.xml:
-##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
-## * In this file (CMakeLists.txt):
-##   * add "dynamic_reconfigure" to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * uncomment the "generate_dynamic_reconfigure_options" section below
-##     and list every .cfg file to be processed
-
-## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
 
 ###################################
 ## catkin specific configuration ##
 ###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES not_a_project
@@ -109,6 +86,8 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+
+# --- Part 1, Service timer ---
 add_executable(timer_srv_node src/timer.cpp)
 target_link_libraries(timer_srv_node  ${catkin_LIBRARIES} )
 add_dependencies(timer_srv_node not_a_project_gencpp)
@@ -118,12 +97,11 @@ target_link_libraries(filter_node  ${catkin_LIBRARIES} )
 add_dependencies(filter_node not_a_project_gencpp)
 
 
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+# --- Part 5, Homework 1 in cpp ---
+add_executable(wall_aproach_node src/wall_approach.cpp)
+target_link_libraries(wall_aproach_node  ${catkin_LIBRARIES} )
+add_dependencies(wall_aproach_node not_a_project_gencpp)
 
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(laser_front_filter src/front_filter.cpp)
+target_link_libraries(laser_front_filter  ${catkin_LIBRARIES} )
+add_dependencies(laser_front_filter not_a_project_gencpp)

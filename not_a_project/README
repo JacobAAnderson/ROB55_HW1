@@ -1,0 +1,23 @@
+Jacob Anderson
+ROB599 Not A Project
+README
+
+
+Part 1, Service timer.
+
+Launch:  roslaunch not_a_project function_timer.launch
+
+The test function was first set up to receive a float value and return a boolean.
+
+Then to use bigger data, the median filter from home work 3 was implemented as the test function.
+This test function received a laserscan message and returned the filtered laserscan.
+
+The timer node averages over 100 service calls and writes the average time to a file named AverageTimes.txt in the working directory.
+
+Implemented in cpp.
+
+Results from when I ran the timer:
+
+              Small Data    Big Data
+Service Call: 0.0011        0.00185
+Local Call:   0.00005       0.00027
