@@ -1,5 +1,5 @@
 # inputs
-float64 stopping_distance
+sensor_msgs/LaserScan raw
 ---
 # outputs
-bool set
+sensor_msgs/LaserScan filtered

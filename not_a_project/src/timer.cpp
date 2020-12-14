@@ -14,8 +14,9 @@
 // ROS Stuff
 #include <ros/ros.h>
 #include "sensor_msgs/LaserScan.h"
-#include <rob599_basic/Doubler.h>
+#include <not_a_project/filter.h>
 
+#include "filter_function.h"
 
 
 // Define variables
@@ -29,95 +30,128 @@ class timer_node {
 protected:
 	ros::NodeHandle node;                 //  The Node Handel
 	ros::Subscriber sub1;                 //  Subscribe to the base scan as our source of laser scans
-  ros::Subscriber sub2;                 //  Subscribe to the returning scan lines
-	ros::Publisher  pub;                  //  Publish the scan lines that are being timed
+  ros::Publisher  pub1;                 //  Publish the scan lines filtered by the service
+	ros::Publisher  pub2;                 //  Publish the scan lines filtered localy
 
-  std::vector<double> trip_times;       //  Duration for the other nodes to do their work
-  std::map<int, ros::Time> manifest;    //  Keeps track of when the outgoing scan was sent
+	ros::ServiceClient client;
+
+	not_a_project::filter service_data;
+
+  std::vector<double> service_times;    //  Duration for the service call
+  std::vector<double> local_times;      //  Duration for the local call
   int count; 														// 	Number of messages that have been sent
 
-	std::string file_path;								//	File path to saver results
-
+	std::string file_path;
 
 public:
 
 	timer_node(){
 		// -- Set up the subscriber and publisher
     sub1 = node.subscribe("base_scan", 1, &timer_node::callback, this);
-//    sub2 = node.subscribe("timer/clocked_scan", 100, &timer_node::callback2, this);
-//		pub = node.advertise<sensor_msgs::LaserScan>("timer/queued_scan", 1);
+		pub1 = node.advertise<sensor_msgs::LaserScan>("filtered_laserscan/service", 1);
+		pub2 = node.advertise<sensor_msgs::LaserScan>("filtered_laserscan/local", 1);
 
 
-		// -- Set up Service
-//		ros::ServiceServer service = node.advertiseService("doubler", doubler);
-//		ROS_INFO("Service started");
+		// --- Client set up
+		client = node.serviceClient<not_a_project::filter>("laser_filter");
 
 
 		// -- Get the file path that results are being saved too
 		char cCurrentPath[FILENAME_MAX];
 		if (GetCurrentDir(cCurrentPath, sizeof(cCurrentPath))){
-	      cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
+	      cCurrentPath[sizeof(cCurrentPath) - 1] = '\0';                        // not really required
 			}
+		file_path = std::string(cCurrentPath) +"/AverageTimes.txt";               //	File Path to save results
 
-	 file_path = std::string(cCurrentPath) + "/average_time.txt"; 							//	File Path to save results
-
-
-	 // -- Initialize the count
-	 count = 0;
+	 	// -- Initialize the count
+	 	count = 0;
 
 	}
 
 
-	void callback(const sensor_msgs::LaserScan::ConstPtr& scan){             	//  Callback to send out the laser scans
 
-		if(count > 100) return;                                                 	//  Stop after 100 Laser Scans
+	void callback(const sensor_msgs::LaserScan::ConstPtr& scan){                //  Callback to send out the laser scans
 
-    count++;                                                                	//  Keep track of how many laser scans have been sent
+		if(count >= 100) return;                                                  //  Stop after 100 Laser Scans
 
-    manifest.insert(std::pair<int, ros::Time> (count, ros::Time::now()) );  	//  Make note of current time
+    count++;                                                                  //  Keep track of how many laser scans have been sent
 
-		pub.publish(*scan);                                                     	//  Send out the scan line
+	 	service_data.request.raw = *scan;
+
+		std::cout << "Callback " << count << std::endl;
+
+
+		// --- Time the sevice call ---
+		ros::Time now = ros::Time::now();
+
+		if (!client.call(service_data)){
+			ROS_ERROR("Service call failed");
+			return;
+		}
+
+		ros::Duration dt = ros::Time::now()- now;
+
+		service_times.push_back(dt.toSec());                                      //  Hold onto the duration
+
+		sensor_msgs::LaserScan filtered = service_data.response.filtered;
+		pub1.publish(filtered);
+
+
+		// --- Time the local call ---
+		now = ros::Time::now();
+
+		filtered = filter( *scan );
+
+		dt = ros::Time::now()- now;
+
+		local_times.push_back(dt.toSec());                                      //  Hold onto the duration
+
+		pub2.publish(filtered);
+
+
+
+		//  Less than 100 scans have been sent, dont compute avarage
+		if (count < 100 ) return;
+
+		std::cout << "\n\n\n";
+
+		double average = std::accumulate( service_times.begin(), service_times.end(), 0.0) / service_times.size();
+		ROS_INFO("Service Average Time: %f", average);
+		writeFile("Service", average);
+
+
+ 		average = std::accumulate( local_times.begin(), local_times.end(), 0.0) / local_times.size();
+		ROS_INFO("Local Average Time: %f", average);
+		writeFile("Local", average);
+
 	}
 
 
-  void callback2(const sensor_msgs::LaserScan::ConstPtr& scan){             	// Callback for the returning laser scans
+  void writeFile(const std::string &name, const double &average){        	// Callback to write avarage to file
 
-  	if ( manifest.find(scan->header.seq) == manifest.end() ) return;          //  Make Sure the key exists
+		ROS_INFO_STREAM("Writing  " << name << " to File: " << file_path);
 
-  	ros::Duration dt = ros::Time::now()- manifest[scan->header.seq];          //  Elapsed time for nodes to work
+		std::ofstream myfile;
+  	myfile.open (file_path, std::ios_base::app);
+  	myfile << name << "Average Time:" << average << " [sec]" << std::endl;
+  	myfile.close();
 
-  	trip_times.push_back(dt.toSec());                                         //  Hold onto the duration
+		ROS_INFO("Done writing file");
 
-  	ROS_INFO("Duration: %f", dt.toSec() );
-
-  	if(scan->header.seq == 100){                                              //  After 100 messages, find the average time
-
-    	double average = std::accumulate( trip_times.begin(), trip_times.end(), 0.0) / trip_times.size();
-
-    	ROS_INFO("Average: %f\n\n\n\n", average);
-
-			// Write Avarage to file
-			std::ofstream myfile;
-  		myfile.open (file_path);
-  		myfile << "Average Time:" << average << std::endl;
-  		myfile.close();
-
-			ROS_INFO_STREAM("Average Time Saved To: " << file_path);
-    	}
   }
 
-};
+}; // --- End timer_node class ---
 
 
 
 
 int main(int argc, char **argv) {
 	// Initialize the node and set up the node handle.
-	ros::init(argc, argv, "timer_noiser");
+	ros::init(argc, argv, "timer_srv_node");
 
 	timer_node tn;
 
-  ROS_INFO("Timer Node Started");
+  ROS_INFO("Timer srv Node Started");
 	// Give control over to ROS.
 	ros::spin();
 
